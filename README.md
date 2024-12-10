@@ -16,7 +16,7 @@ Pytorch Experiment Manager is a flexible and modular framework for training, tes
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ExperimentManager.git
+git clone https://github.com/Dexoculus/PyTorch-Experiment-Manager.git
 cd ExperimentManager
 ```
 2. Install required dependencies:
