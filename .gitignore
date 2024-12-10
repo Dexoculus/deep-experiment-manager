@@ -1,0 +1,22 @@
+# Sphinx build directory
+build/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Python bytecode
+**__pycache__/
+
+# Virtual environment
+venv/
+
+# Optional Sphinx files
+Makefile
+make.bat
+
+# Test Result folder
+test/data/
+losses/
+plots/
+checkpoints/

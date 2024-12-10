@@ -1,0 +1,55 @@
+model:
+  module: 'test.model'
+  class: 'TestModel'
+  args:
+    # input_size: 784
+    output_size: 10 # If Classification task, than number of classes
+
+training:
+  epochs: 10
+  learning_rate: 0.001
+  optimizer:
+    type: 'Adam'
+    args:
+      weight_decay: 0.0001
+
+loss:
+  type: 'CrossEntropyLoss'
+  args: {}
+
+dataset:
+  module: 'torchvision.datasets'
+  class: 'MNIST'
+  args:
+    preprocessing:
+      module: 'test.preprocessing'
+      function: 'get_preprocessing'
+      args:
+
+    train:
+      args:
+        root: './test/data'
+        train: True
+        download: True
+      loader:
+        batch_size: 64
+        shuffle: True
+    #valid:
+    #  args: {}
+    #  loader: {}
+    test:
+      args:
+        root: './test/data'
+        train: True
+        download: True
+      loader:
+        batch_size: 1000
+        shuffle: False
+
+visualization:
+  enabled: True
+  plot_dir: './plots'
+
+export_loss:
+  enabled: True
+  export_dir: './losses'
