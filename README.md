@@ -209,7 +209,7 @@ if __name__ == '__main__':
 
 3. **Run the main code:**
 ```bash
-python main.py --config.yaml
+python main.py --config "path of config.yaml"
 ```
 in this case, config.yaml must be placed in root directory.
 
