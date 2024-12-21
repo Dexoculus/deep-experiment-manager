@@ -99,6 +99,8 @@ class ExperimentManager:
         train_losses, valid_losses, total_time, valid_time = self.trainer.get_results()
         if self.isTest:    
             test_results = self.tester.get_results()
+        else:
+            test_results = {}
         
         model_config = self.config.get('model', {})
         training_config = self.config.get('training', {})
