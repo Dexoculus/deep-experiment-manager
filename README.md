@@ -296,7 +296,7 @@ records:
         accuracy: 0.9888
 ```
 And here is the example of loss plot:
-![lossplot](./test/plots/loss_curve.png)
+![lossplot](./test/plots/TestModel_loss_curve.png)
 ## License
 This project is provided under the MIT License.
 

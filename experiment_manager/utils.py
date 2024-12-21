@@ -27,7 +27,7 @@ def save_checkpoint(model, epoch, checkpoint_dir):
     """
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir)
-    path = os.path.join(checkpoint_dir, f"checkpoint_epoch_{epoch+1}.pth")
+    path = os.path.join(checkpoint_dir, f"{type(model).__name__}_checkpoint_epoch_{epoch+1}.pth")
     torch.save(model.state_dict(), path)
 
 def count_parameters(model):

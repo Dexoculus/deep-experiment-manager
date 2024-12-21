@@ -10,7 +10,7 @@ labeldict = {'fontsize': 15,
                 'style': 'normal', # 'oblique' 'italic'
                 'fontweight': 'normal'} # 'bold', 'heavy', 'light', 'ultrabold', 'ultralight'
 
-def plot_losses(train_losses, val_losses, plot_dir):
+def plot_losses(train_losses, val_losses, plot_dir, model_name):
     """
     Plots training and validation loss curves and saves the figure to a file.
 
@@ -30,7 +30,7 @@ def plot_losses(train_losses, val_losses, plot_dir):
     plt.xlabel('Epochs', **labeldict)
     plt.ylabel('Loss', **labeldict)
     plt.legend()
-    plt.savefig(os.path.join(plot_dir, 'loss_curve.png'))
+    plt.savefig(os.path.join(plot_dir, f'{model_name}_loss_curve.png'))
     plt.close()
 
 def plot_performance(y_true, y_pred, plot_dir):

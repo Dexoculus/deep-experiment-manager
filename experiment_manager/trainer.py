@@ -143,15 +143,15 @@ class Trainer:
                 if self.visualization_enabled or self.export_results_enabled:
                     self.valid_losses.append(val_loss)
 
-            save_checkpoint(self.model, epoch, self.config.get('checkpoint_dir', './checkpoints'))
+            save_checkpoint(self.model, epoch, self.config.get('checkpoint_dir', f'./checkpoints/{type(self.model).__name__}'))
 
         total_end_time = time.time()
         self.total_time = total_end_time - total_start_time
         print(f"[Training] Training process completed in {self.total_time}s.")
 
         if self.visualization_enabled:
-            plot_dir = self.config['visualization'].get('plot_dir', './plots')
-            plot_losses(self.train_losses, self.valid_losses, plot_dir)
+            plot_dir = self.config['visualization'].get('plot_dir', f'./plots/{type(self.model).__name__}')
+            plot_losses(self.train_losses, self.valid_losses, plot_dir, type(self.model).__name__)
 
     def validate(self, epoch, epochs):
         print(f"[Validation] Starting validation for epoch {epoch+1:0{self.zf}d}/{epochs}...")

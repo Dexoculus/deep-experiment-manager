@@ -61,7 +61,7 @@ class ExperimentManager:
             self.tester.test()
 
         if self.export_results_enabled:
-            export_dir = self.config['export_results'].get('export_dir', './losses')
+            export_dir = self.config['export_results'].get('export_dir', f'./results/{type(self.model).__name__}')
             self._export_results(export_dir)
 
     def _load_model(self):
@@ -106,7 +106,7 @@ class ExperimentManager:
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
 
-        export_path = os.path.join(export_dir, 'results.yaml')
+        export_path = os.path.join(export_dir, f'{type(self.model).__name__}_results.yaml')
 
         if os.path.exists(export_path):
             with open(export_path, 'r') as f:
