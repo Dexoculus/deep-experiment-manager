@@ -9,7 +9,7 @@ Pytorch Experiment Manager is a flexible and modular framework for training, tes
 - **Task Agnostic**: Supports various tasks such as classification, regression, or generation by specifying different models, losses, and transforms.
 - **Optional Features**:
   - **Visualization**: Plot training and validation loss curves and save them as images.
-  - **Exporting Losses**: Save recorded losses to text files for further analysis.
+  - **Exporting Results**: Save recorded losses, experiment configuration, and test results to yaml files for further analysis.
 - **Clear and Modular Code Structure**: Separation of concerns into modules (`manager`, `trainer`, `tester`, `datasets`, `utils`, etc.) for improved maintainability and scalability.
 
 ## Installation
@@ -26,20 +26,105 @@ pip install -r requirements.txt
 Make sure PyTorch and other dependencies (such as torchvision, yaml, matplotlib) are installed. Adjust the requirements as needed.
 
 ## Usage
+1. **Define Required Object Classes and functions**
+Model modules, dataset classes, and preprocessing functions must be defined first.
 
-1. Edit the config.yaml:
-Update paths, model modules, dataset classes, preprocessing functions, training parameters, and so forth to match your project.
+- **Model**
+You should define your own model to experiment.
+Following is the simple example of PyTorch Neural Network model.
+```python
+import torch.nn as nn
 
-model modules, dataset classes, preprocessing functions must be defined first. 
-You can also check the example code in `/test` directory. 
+class TestModel(nn.Module):
+    def __init__(self, output_size):
+        super(TestModel, self).__init__()
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
+        self.dropout = nn.Dropout2d()
+        self.fc1 = nn.Linear(320, 50)
+        self.fc2 = nn.Linear(50, output_size)
+
+    def forward(self, x):
+        x = nn.functional.relu(nn.functional.max_pool2d(self.conv1(x), 2))
+        x = nn.functional.relu(nn.functional.max_pool2d(self.dropout(self.conv2(x)), 2))
+        x = x.view(-1, 320)
+        x = nn.functional.relu(self.fc1(x))
+        x = nn.functional.dropout(x, training=self.training)
+        x = self.fc2(x)
+        return nn.functional.log_softmax(x, dim=1)
+```
+
+- **Dataset**
+You can use your own custom dataset or built-in datasets of PyTorch.
+Following is a simple example of custom dataset class.
+```python
+import torch
+from torch.utils.data import Dataset
+
+class BasicDataset(Dataset):
+    def __init__(self, x_tensor, y_tensor):
+        super(BasicDataset, self).__init__()
+
+        self.x = x_tensor
+        self.y = y_tensor
+        
+    def __getitem__(self, index):
+        return self.x[index], self.y[index]
+
+    def __len__(self):
+        return len(self.x)
+```
+
+- **Preprocessing or Trasform**
+When you apply Transform object defined in PyTorch, You should define a function that returns defined Transform object:
+```python
+from torchvision import transforms
+
+def get_transform():
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))
+    ])
+
+    return transform
+```
+Or, When you apply your own custom data preprocessing function. just keep the following format:
+```python
+def processing(data):
+    "Preprocessing code for your data"
+    return processed data
+```
+Also, your custom dataset must have argument for preprocessing function:
+```python
+import torch
+from torch.utils.data import Dataset
+
+class BasicDataset(Dataset):
+    def __init__(self, x_tensor, y_tensor, processing=None):
+        super(BasicDataset, self).__init__()
+
+        self.x = x_tensor
+        self.y = y_tensor
+        
+        if processing is not None:
+          self.x = processing(self.x)
+
+    def __getitem__(self, index):
+        return self.x[index], self.y[index]
+
+    def __len__(self):
+        return len(self.x)
+```
+2. **Edit the config.yaml:**
+Update paths, model modules, dataset classes, preprocessing functions, training parameters, and so forth to match your project. 
+You can also check the example codes in `/test` directory. 
 Example:
 ```yaml
-  model:
-  module: 'your.model'
-  class: 'YourModel'
-  args:
-    input_size: 784
-    output_size: 10 # If Classification task, than number of classes
+model:
+  module: 'test.model'
+  class: 'TestModel'
+  args: # Input Arguments of your model
+    output_size: 10
 
 training:
   epochs: 10
@@ -49,37 +134,39 @@ training:
     args:
       weight_decay: 0.0001
 
+testing:
+  metric: ['accuracy', 'mse'] # "f1", "mae"
+
 loss:
   type: 'CrossEntropyLoss'
   args: {}
 
 dataset:
-  module: 'your.dataset'
-  class: 'YourDataset'
+  module: 'torchvision.datasets' # PyTorch built-in dataset
+  class: 'MNIST'
+  preprocessing_arg: 'transform'
   args:
     preprocessing:
-      module: 'your.preprocessing_module'
-      function: 'example_preprocessing'
-      args:
-        normalize: True
-        augment: False
+      module: 'test.preprocessing'
+      function: 'get_transform'
+
     train:
-      args:
-        root: 'your data root directory'
+      args: # Input Arguments of your custom dataset
+        root: './train/data'
         train: True
         download: True
-      loader:
+      loader: # Arguments of DataLoader
         batch_size: 64
         shuffle: True
-    valid:
-      args:
-      loader:
+    #valid:
+    #  args: {}
+    #  loader: {}
     test:
-      args:
-        root: 'your data root directory'
-        train: True
+      args: # Input Arguments of your custom dataset
+        root: './test/data'
+        train: False
         download: True
-      loader:
+      loader: # Arguments of DataLoader
         batch_size: 1000
         shuffle: False
 
@@ -87,12 +174,12 @@ visualization:
   enabled: True
   plot_dir: './plots'
 
-export_loss:
+export_results:
   enabled: True
-  export_dir: './losses'
+  export_dir: './results'
 ```
 
-2. Write the Model Experiment Code:
+2. **Write the Model Experiment Code:**
 For example, this would be code for main.py
 
 ```python
@@ -120,7 +207,7 @@ if __name__ == '__main__':
     main()
 ```
 
-3. Run the main code:
+3. **Run the main code:**
 ```bash
 python main.py --config.yaml
 ```
@@ -130,14 +217,86 @@ this will:
 - Load the specified model, dataset, and transforms.
 - Run training for the specified number of epochs.
 - Optionally validate after each epoch.
-- Save checkpoints, plot loss curves, and export losses if enabled.
+- Save checkpoints, plot loss curves, and export results if enabled.
 
-4. Check Outputs:
+4. **Check Outputs:**
 - Checkpoints: Stored in `./checkpoints/` by default.
-- Loss plots: Stored in `./plots/` if visualization is enabled.
-- Loss files: Stored in `./losses/` if exporting is enabled.
+- Loss plots: Stored in the path you write in config if visualization is enabled.
+- results files: Stored in the path you write in config if exporting is enabled.
 - Logs: Training and validation logs displayed in the terminal.
 
+Here is the example of the results file:
+```yaml
+records:
+-   model_config:
+        module: test.model
+        class: TestModel
+        args:
+            output_size: 10
+    training_config:
+        epochs: 10
+        learning_rate: 0.001
+        optimizer:
+            type: Adam
+            args:
+                weight_decay: 0.0001
+        batch_size: 64
+    loss_func:
+        type: CrossEntropyLoss
+        args: {}
+    num_parameters: 21840
+    total_time: 85.88482213020325
+    valid_time: 0
+    train_losses:
+    - 0.5216201075168052
+    - 0.24523054485890403
+    - 0.20145633446572941
+    - 0.1797466142696819
+    - 0.16584936341743417
+    - 0.1538330529377595
+    - 0.1499541729374894
+    - 0.14426758698324785
+    - 0.13845630399962225
+    - 0.1345993925982129
+    valid_losses: []
+    test_results:
+        accuracy: 0.9894
+-   model_config:
+        module: test.model
+        class: TestModel
+        args:
+            output_size: 10
+    training_config:
+        epochs: 10
+        learning_rate: 0.001
+        optimizer:
+            type: Adam
+            args:
+                weight_decay: 0.0001
+        batch_size: 64
+    loss_func:
+        type: CrossEntropyLoss
+        args: {}
+    num_parameters: 21840
+    total_time: 84.3278419971466
+    valid_time: 0
+    train_losses:
+    - 0.5215464325776613
+    - 0.24535706221882594
+    - 0.20132130482939006
+    - 0.18052261650586116
+    - 0.16633369837766454
+    - 0.1533887283896396
+    - 0.1472813178922163
+    - 0.14270564404997363
+    - 0.13906002168490023
+    - 0.1365545368048428
+    valid_losses: []
+    test_results:
+        accuracy: 0.9888
+```
+And here is the example of loss plot:
+![lossplot](./test/plots/loss_curve.png)
 ## License
 This project is provided under the MIT License.
 

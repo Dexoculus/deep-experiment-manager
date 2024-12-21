@@ -1,10 +1,10 @@
-.. Training_Module documentation master file, created by
-   sphinx-quickstart on Wed Dec  4 13:33:08 2024.
+.. PyTorch Experiment Manager documentation master file, created by
+   sphinx-quickstart on Tue Dec 10 18:22:34 2024.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Training_Module documentation
-=============================
+PyTorch Experiment Manager documentation
+========================================
 
 Add your content using ``reStructuredText`` syntax. See the
 `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_

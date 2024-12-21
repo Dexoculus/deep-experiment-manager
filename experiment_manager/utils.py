@@ -1,7 +1,8 @@
+import os
 import random
 import numpy as np
+
 import torch
-import os
 
 def set_seed(seed):
     """
@@ -28,3 +29,6 @@ def save_checkpoint(model, epoch, checkpoint_dir):
         os.makedirs(checkpoint_dir)
     path = os.path.join(checkpoint_dir, f"checkpoint_epoch_{epoch+1}.pth")
     torch.save(model.state_dict(), path)
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)

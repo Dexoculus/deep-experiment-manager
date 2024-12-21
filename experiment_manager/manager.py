@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+import yaml
 import importlib
 import torch
 
@@ -7,8 +8,7 @@ from .config import load_config
 from .trainer import Trainer
 from .tester import Tester
 from .datasets import get_datasets
-from .utils import set_seed
-
+from .utils import set_seed, count_parameters
 
 class ExperimentManager:
     """
@@ -28,6 +28,7 @@ class ExperimentManager:
         """
         self.config = load_config(config_path)
         self.device = self._get_device()
+        self.export_results_enabled = self.config.get('export_results', {}).get('enabled', False)
 
     def _get_device(self):
         """
@@ -36,8 +37,7 @@ class ExperimentManager:
         Returns:
             torch.device: The device to use.
         """
-        use_cuda = True  # Optionally, this can be derived from config if needed
-        return torch.device('cuda' if use_cuda and torch.cuda.is_available() else 'cpu')
+        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def run_experiment(self):
         """
@@ -46,19 +46,23 @@ class ExperimentManager:
         set_seed(self.config.get('seed', 42))
 
         # Load model and move to appropriate device
-        model = self._load_model().to(self.device)
+        self.model = self._load_model().to(self.device)
 
         # Retrieve train, valid, and test loaders based on config
         train_loader, valid_loader, test_loader = get_datasets(self.config['dataset'])
 
         # Initialize trainer and run training
-        trainer = Trainer(model, train_loader, valid_loader, self.config, self.device)
-        trainer.train()
+        self.trainer = Trainer(self.model, train_loader, valid_loader, self.config, self.device)
+        self.trainer.train()
 
         # If a test loader is available, run testing
         if test_loader is not None:
-            tester = Tester(model, test_loader, self.config, self.device)
-            tester.test()
+            self.tester = Tester(self.model, test_loader, self.config, self.device)
+            self.tester.test()
+
+        if self.export_results_enabled:
+            export_dir = self.config['export_results'].get('export_dir', './losses')
+            self._export_results(export_dir)
 
     def _load_model(self):
         """
@@ -76,4 +80,77 @@ class ExperimentManager:
         module = importlib.import_module(module_name)
         model_class = getattr(module, class_name)
         model = model_class(**model_args)
+
         return model
+    
+    def _export_results(self, export_dir):
+        """
+        Exporting the recorded results and experiment configuration.
+
+        Args:
+            export_dir (str): Directory to save the results file.
+        """
+        print("[Exporting] Exporting recorded results and configuration...")
+
+        total_params = count_parameters(self.model)
+        train_losses, valid_losses, total_time, valid_time = self.trainer.get_results()
+        test_results = self.tester.get_results()
+        
+        model_config = self.config.get('model', {})
+        training_config = self.config.get('training', {})
+        loss_func = self.config.get('loss', {})
+
+        batch = self.config['dataset']['args']['train']['loader'].get('batch_size', {})
+        training_config['batch_size'] = batch
+
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+
+        export_path = os.path.join(export_dir, 'results.yaml')
+
+        if os.path.exists(export_path):
+            with open(export_path, 'r') as f:
+                existing_data = yaml.safe_load(f)
+
+            if existing_data is None:
+                existing_data = {}
+
+            if "records" not in existing_data:
+                existing_data = {
+                    "records": [existing_data] if existing_data else []
+                }
+            existing_data["records"].append({
+                "model_config": model_config,
+                "training_config": training_config,
+                "loss_func": loss_func,
+                "num_parameters": total_params,
+                "total_time": total_time,
+                "valid_time": valid_time,
+                "train_losses": train_losses,
+                "valid_losses": valid_losses,
+                "test_results": test_results
+            })
+
+            with open(export_path, 'w') as f:
+                yaml.safe_dump(existing_data, f, sort_keys=False, default_flow_style=False, indent=4)
+
+        else:
+            data_to_export = {
+                "records": [
+                    {
+                        "model_config": model_config,
+                        "training_config": training_config,
+                        "loss_func": loss_func,
+                        "num_parameters": total_params,
+                        "total_time": total_time,
+                        "valid_time": valid_time,
+                        "train_losses": train_losses,
+                        "valid_losses": valid_losses,
+                        "test_results": test_results    
+                    }
+                ]
+            }
+            with open(export_path, 'w') as f:
+                yaml.safe_dump(data_to_export, f, sort_keys=False, default_flow_style=False, indent=4)
+                
+        print(f"[Exporting] Results and configuration exported to {export_path}.")

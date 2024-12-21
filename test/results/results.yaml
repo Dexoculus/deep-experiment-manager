@@ -1,0 +1,67 @@
+records:
+-   model_config:
+        module: test.model
+        class: TestModel
+        args:
+            output_size: 10
+    training_config:
+        epochs: 10
+        learning_rate: 0.001
+        optimizer:
+            type: Adam
+            args:
+                weight_decay: 0.0001
+        batch_size: 64
+    loss_func:
+        type: CrossEntropyLoss
+        args: {}
+    num_parameters: 21840
+    total_time: 85.88482213020325
+    valid_time: 0
+    train_losses:
+    - 0.5216201075168052
+    - 0.24523054485890403
+    - 0.20145633446572941
+    - 0.1797466142696819
+    - 0.16584936341743417
+    - 0.1538330529377595
+    - 0.1499541729374894
+    - 0.14426758698324785
+    - 0.13845630399962225
+    - 0.1345993925982129
+    valid_losses: []
+    test_results:
+        accuracy: 0.9894
+-   model_config:
+        module: test.model
+        class: TestModel
+        args:
+            output_size: 10
+    training_config:
+        epochs: 10
+        learning_rate: 0.001
+        optimizer:
+            type: Adam
+            args:
+                weight_decay: 0.0001
+        batch_size: 64
+    loss_func:
+        type: CrossEntropyLoss
+        args: {}
+    num_parameters: 21840
+    total_time: 84.3278419971466
+    valid_time: 0
+    train_losses:
+    - 0.5215464325776613
+    - 0.24535706221882594
+    - 0.20132130482939006
+    - 0.18052261650586116
+    - 0.16633369837766454
+    - 0.1533887283896396
+    - 0.1472813178922163
+    - 0.14270564404997363
+    - 0.13906002168490023
+    - 0.1365545368048428
+    valid_losses: []
+    test_results:
+        accuracy: 0.9888

@@ -1,8 +1,10 @@
+import time
 import torch
 from torch import nn, optim
+from tqdm import tqdm
+
 from .utils import save_checkpoint
 from .visualization import plot_losses
-import os
 
 class Trainer:
     """
@@ -20,7 +22,7 @@ class Trainer:
         val_losses (list): A list of recorded validation losses if visualization or export is enabled.
     """
 
-    def __init__(self, model, train_loader, val_loader, config, device):
+    def __init__(self, model, train_loader, valid_loader, config, device):
         """
         Initializes the Trainer.
 
@@ -31,133 +33,148 @@ class Trainer:
             config (dict): Experiment configuration.
             device (torch.device): Computation device (CPU or GPU).
         """
-        self.model = model
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.config = config
-        self.device = device
+        print("[Initializing] Starting trainer initialization...")
 
-        self.criterion = self._get_loss_function()
-        self.optimizer = self._get_optimizer()
+        steps = [
+            "Loading model",
+            "Loading training data loader",
+            "Loading validation data loader",
+            "Configuring loss function",
+            "Configuring optimizer",
+            "Finalizing setup"
+        ]
 
-        self.visualization_enabled = self.config.get('visualization', {}).get('enabled', False)
-        self.export_loss_enabled = self.config.get('export_loss', {}).get('enabled', False)
+        with tqdm(total=len(steps), desc="[Initializing]", bar_format="{l_bar}{bar:40}{r_bar}") as pbar:
+            self.model = model
+            pbar.set_postfix_str("Loading model...")
+            time.sleep(0.5)
+            pbar.update(1)
 
-        # Only initialize loss lists if needed
-        if self.visualization_enabled or self.export_loss_enabled:
-            self.train_losses = []
-            self.val_losses = []
+            self.train_loader = train_loader
+            pbar.set_postfix_str("Loading training data loader...")
+            time.sleep(0.5)
+            pbar.update(1)
+
+            self.valid_loader = valid_loader
+            pbar.set_postfix_str("Loading validation data loader...")
+            time.sleep(0.5)
+            pbar.update(1)
+
+            self.config = config
+            self.device = device
+
+            self.criterion = self._get_loss_function()
+            pbar.set_postfix_str("Configuring loss function...")
+            time.sleep(0.5)
+            pbar.update(1)
+
+            self.optimizer = self._get_optimizer()
+            pbar.set_postfix_str("Configuring optimizer...")
+            time.sleep(0.5)
+            pbar.update(1)
+
+            self.visualization_enabled = self.config.get('visualization', {}).get('enabled', False)
+            self.export_results_enabled = self.config.get('export_results', {}).get('enabled', False)
+
+            if self.visualization_enabled or self.export_results_enabled:
+                self.train_losses = []
+                self.valid_losses = []
+
+            pbar.set_postfix_str("Finalizing setup...")
+            time.sleep(0.5)
+            pbar.update(1)
+
+        print("[Initializing] Trainer Initialized successfully.")
 
     def _get_loss_function(self):
-        """
-        Initializes the loss function based on the config.
-
-        Returns:
-            nn.Module: A PyTorch loss function.
-        """
         loss_config = self.config.get('loss', {})
         loss_type = loss_config['type']
         loss_args = loss_config.get('args', {})
         loss_class = getattr(nn, loss_type)
+
         return loss_class(**loss_args)
 
     def _get_optimizer(self):
-        """
-        Initializes the optimizer based on the config.
-
-        Returns:
-            torch.optim.Optimizer: The initialized optimizer.
-        """
         optimizer_config = self.config['training']['optimizer']
         optimizer_type = optimizer_config['type']
         optimizer_args = optimizer_config.get('args', {})
         lr = self.config['training']['learning_rate']
         optimizer_class = getattr(optim, optimizer_type)
+
         return optimizer_class(self.model.parameters(), lr=lr, **optimizer_args)
 
     def train(self):
-        """
-        Runs the training loop for the specified number of epochs.
-        Records and optionally visualizes or exports losses.
-        """
         if self.train_loader is None:
-            print("No training data provided.")
-            return
+            raise ValueError("Training data loader (train_loader) is not provided.")
 
+        print("[Training] Starting training process...")
         epochs = self.config['training']['epochs']
+        self.zf = len(str(epochs)) # Zero filling
+        self.valid_time = 0
+        total_start_time = time.time()
+
         for epoch in range(epochs):
-            self.model.train()
-            total_loss = 0
-            for inputs, targets in self.train_loader:
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
-                self.optimizer.zero_grad()
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, targets)
-                loss.backward()
-                self.optimizer.step()
-                total_loss += loss.item()
+            with tqdm(total=len(self.train_loader), desc=f"Epoch {epoch+1:0{self.zf}d}/{epochs} [Training]",
+                      bar_format="{l_bar}{bar:40}{r_bar}", leave=True) as pbar:
+                self.model.train()
+                total_loss = 0
+                for inputs, targets in self.train_loader:
+                    inputs, targets = inputs.to(self.device), targets.to(self.device)
+                    self.optimizer.zero_grad()
+                    outputs = self.model(inputs)
+                    loss = self.criterion(outputs, targets)
+                    loss.backward()
+                    self.optimizer.step()
+                    total_loss += loss.item()
+                    pbar.set_postfix(loss=loss.item())
+                    pbar.update(1)
 
             avg_loss = total_loss / len(self.train_loader)
-            print(f"Epoch {epoch+1}/{epochs}: Train Loss: {avg_loss:.4f}")
+            print(f"Epoch {epoch+1:0{self.zf}d}/{epochs} Train Loss: {avg_loss:.4f}")
 
-            if self.visualization_enabled or self.export_loss_enabled:
+            if self.visualization_enabled or self.export_results_enabled:
                 self.train_losses.append(avg_loss)
 
-            # Validation step if validation loader is provided
-            if self.val_loader is not None:
-                val_loss = self.validate()
-                if self.visualization_enabled or self.export_loss_enabled:
-                    self.val_losses.append(val_loss)
-                print(f"  Val Loss: {val_loss:.4f}")
-            else:
-                if self.visualization_enabled or self.export_loss_enabled:
-                    self.val_losses.append(None)
+            if self.valid_loader is not None:
+                val_start_time = time.time()
+                val_loss = self.validate(epoch, epochs)
+                val_end_time = time.time()
+                self.valid_time += val_end_time - val_start_time
+                if self.visualization_enabled or self.export_results_enabled:
+                    self.valid_losses.append(val_loss)
 
             save_checkpoint(self.model, epoch, self.config.get('checkpoint_dir', './checkpoints'))
 
-        # After training, optional visualization and exporting losses
+        total_end_time = time.time()
+        self.total_time = total_end_time - total_start_time
+        print(f"[Training] Training process completed in {self.total_time}s.")
+
         if self.visualization_enabled:
             plot_dir = self.config['visualization'].get('plot_dir', './plots')
-            plot_losses(self.train_losses, self.val_losses, plot_dir)
+            plot_losses(self.train_losses, self.valid_losses, plot_dir)
 
-        if self.export_loss_enabled:
-            export_dir = self.config['export_loss'].get('export_dir', './losses')
-            self._export_losses(export_dir)
+    def validate(self, epoch, epochs):
+        print(f"[Validation] Starting validation for epoch {epoch+1:0{self.zf}d}/{epochs}...")
 
-    def validate(self):
-        """
-        Runs the validation loop to evaluate model performance on the validation set.
-
-        Returns:
-            float: The average validation loss over the validation set.
-        """
         self.model.eval()
         total_loss = 0
-        with torch.no_grad():
-            for inputs, targets in self.val_loader:
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, targets)
-                total_loss += loss.item()
-        avg_loss = total_loss / len(self.val_loader)
+        with tqdm(total=len(self.valid_loader), desc=f"Epoch {epoch+1:0{self.zf}d}/{epochs} [Validation]",
+                  bar_format="{l_bar}{bar:40}{r_bar}", leave=True) as pbar:
+            with torch.no_grad():
+                for inputs, targets in self.valid_loader:
+                    inputs, targets = inputs.to(self.device), targets.to(self.device)
+                    outputs = self.model(inputs)
+                    loss = self.criterion(outputs, targets)
+                    total_loss += loss.item()
+                    pbar.set_postfix(loss=loss.item())
+                    pbar.update(1)
+
+        avg_loss = total_loss / len(self.valid_loader)
+        print(f"[Validation] Validation completed. Avg Loss: {avg_loss:.4f}")
         return avg_loss
 
-    def _export_losses(self, export_dir):
+    def get_results(self):
         """
-        Exports the recorded training and validation losses to text files.
-
-        Args:
-            export_dir (str): Directory to save the loss files.
+        Retunrs the recorded losses and experiment configuration.
         """
-        if not os.path.exists(export_dir):
-            os.makedirs(export_dir)
-        train_path = os.path.join(export_dir, 'train_losses.txt')
-        with open(train_path, 'w') as f:
-            for l in self.train_losses:
-                f.write(f"{l}\n")
-
-        if any(self.val_losses):
-            val_path = os.path.join(export_dir, 'val_losses.txt')
-            with open(val_path, 'w') as f:
-                for l in self.val_losses:
-                    f.write(f"{l}\n" if l is not None else "None\n")
+        return self.train_losses, self.valid_losses, self.total_time, self.valid_time
