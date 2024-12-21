@@ -57,8 +57,11 @@ class ExperimentManager:
 
         # If a test loader is available, run testing
         if test_loader is not None:
+            self.isTest = True
             self.tester = Tester(self.model, test_loader, self.config, self.device)
             self.tester.test()
+        else:
+            self.isTest = False
 
         if self.export_results_enabled:
             export_dir = self.config['export_results'].get('export_dir', f'./results/{type(self.model).__name__}')
@@ -94,7 +97,8 @@ class ExperimentManager:
 
         total_params = count_parameters(self.model)
         train_losses, valid_losses, total_time, valid_time = self.trainer.get_results()
-        test_results = self.tester.get_results()
+        if self.isTest:    
+            test_results = self.tester.get_results()
         
         model_config = self.config.get('model', {})
         training_config = self.config.get('training', {})
