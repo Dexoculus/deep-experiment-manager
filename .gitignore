@@ -1,5 +1,7 @@
-# Sphinx build directory
+# Build directories
 build/
+dist/
+*.egg-info/
 
 # OS-specific files
 .DS_Store
