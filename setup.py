@@ -18,7 +18,7 @@ setup(
     install_requires=[
         "tqdm>=4.64.0",
         "pyyaml>=6.0",
-        "torch>=2.4.0+cu124",
+        "torch>=2.3.1+cu118 ",
         "torchvision>=0.15.2",
         "numpy>=1.26.4",
         "scikit-learn==1.5.1",
