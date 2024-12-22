@@ -20,6 +20,3 @@ make.bat
 # Test Result folders
 test/data/
 checkpoints/
-
-# Developing Package metadata
-ExperimentManager.egg-info/
