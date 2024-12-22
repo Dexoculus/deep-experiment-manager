@@ -1,6 +1,6 @@
-# Pytorch Experiment Manager
+# Deep Experiment Manager
 
-Pytorch Experiment Manager is a flexible and modular framework for training, testing, and managing deep learning experiments in PyTorch. It provides a clear structure for organizing your models, datasets, transforms, and training pipelines, enabling easy configuration and experimentation with different settings.
+Deep Experiment Manager is a flexible and modular framework for training, testing, and managing deep learning experiments in PyTorch. It provides a clear structure for organizing your models, datasets, transforms, and training pipelines, enabling easy configuration and experimentation with different settings.
 
 ## Features
 
@@ -328,5 +328,3 @@ And here is the example of loss plot:
 ![lossplot](./test/plots/TestModel_loss_curve.png)
 ## License
 This project is provided under the MIT License.
-
-
