@@ -29,6 +29,8 @@ class ExperimentManager:
         self.config = load_config(config_path)
         self.device = self._get_device()
         self.export_results_enabled = self.config.get('export_results', {}).get('enabled', False)
+        self.trainer = Trainer
+        self.tester = Tester
 
     def _get_device(self):
         """
@@ -52,13 +54,13 @@ class ExperimentManager:
         train_loader, valid_loader, test_loader = get_datasets(self.config['dataset'])
 
         # Initialize trainer and run training
-        self.trainer = Trainer(self.model, train_loader, valid_loader, self.config, self.device)
+        self.trainer = self.trainer(self.model, train_loader, valid_loader, self.config, self.device)
         self.trainer.train()
 
         # If a test loader is available, run testing
         if test_loader is not None:
             self.isTest = True
-            self.tester = Tester(self.model, test_loader, self.config, self.device)
+            self.tester = self.tester(self.model, test_loader, self.config, self.device)
             self.tester.test()
         else:
             self.isTest = False
