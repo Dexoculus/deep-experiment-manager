@@ -13,18 +13,47 @@ Pytorch Experiment Manager is a flexible and modular framework for training, tes
 - **Clear and Modular Code Structure**: Separation of concerns into modules (`manager`, `trainer`, `tester`, `datasets`, `utils`, etc.) for improved maintainability and scalability.
 
 ## Installation
+You can install DeepExperimentManager easily using `pip`. This package is compatible with Python 3.9 and later.
 
-1. Clone the repository:
-```bash
-git clone https://github.com/Dexoculus/PyTorch-Experiment-Manager.git
-cd ExperimentManager
-```
-2. Install required dependencies:
-```bash
-pip install -r requirements.txt
-```
-Make sure PyTorch and other dependencies (such as torchvision, yaml, matplotlib) are installed. Adjust the requirements as needed.
+1. Install via pip
+    To install the latest version of DeepExperimentManager from PyPI, run the following command:
+    ```bash
+    pip install DeepExperimentManager
+    ```
+    This will automatically handle the installation of any required dependencies.
 
+2. Verify Installation
+    After the installation, you can verify that the package is successfully installed by running:
+    ```bash
+    python -c "import DeepExperimentManager; print('DeepExperimentManager installed successfully!')"
+    ```
+    Make sure PyTorch and other dependencies (such as torchvision, yaml, matplotlib) are installed. Adjust the requirements as needed.
+
+3. Using Virtual Environments (Recommended)
+    It is a good practice to install Python packages in a virtual environment to avoid dependency conflicts with other projects. You can create and activate a virtual environment as follows:
+    1. Create a virtual environment:
+      ```bash
+      python -m venv venv
+      ```
+    2. Activate the virtual environment:
+      - On Linux/Mac:
+        ```bash
+        source venv/bin/activate
+        ```
+      - On Windows:
+        ```bash
+        venv/Scripts/activate
+        ```
+    3. install the package:
+      ```bash
+      pip install DeepExperimentManager
+      ```
+
+4. Upgrading the package
+    To ensure you have the latest version of `DeepExperimentManager`, you can upgrade it using the following command:
+    ```bash
+    pip install --upgrade DeepExperimentManager
+    ```
 ## Usage
 1. **Define Required Object Classes and functions**
 Model modules, dataset classes, and preprocessing functions must be defined first.
