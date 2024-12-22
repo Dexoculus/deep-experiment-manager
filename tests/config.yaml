@@ -1,0 +1,57 @@
+model:
+  module: 'test.model'
+  class: 'TestModel'
+  args: # Input Arguments of your model
+    output_size: 10
+
+training:
+  epochs: 10
+  learning_rate: 0.001
+  optimizer:
+    type: 'Adam'
+    args:
+      weight_decay: 0.0001
+
+testing:
+  metric: ['accuracy'] # "f1", "mse", "mae"
+
+loss:
+  type: 'CrossEntropyLoss'
+  args: {}
+
+dataset:
+  module: 'torchvision.datasets'
+  class: 'MNIST'
+  preprocessing_arg: 'transform'
+  args:
+    preprocessing:
+      module: 'test.preprocessing'
+      function: 'get_transform'
+
+    train:
+      args: # Input Arguments of your custom dataset
+        root: './test/data'
+        train: True
+        download: True
+      loader: # Arguments of DataLoader
+        batch_size: 64
+        shuffle: True
+    #valid:
+    #  args: {}
+    #  loader: {}
+    test:
+      args: # Input Arguments of your custom dataset
+        root: './test/data'
+        train: False
+        download: True
+      loader: # Arguments of DataLoader
+        batch_size: 1000
+        shuffle: False
+
+visualization:
+  enabled: True
+  plot_dir: './test/plots'
+
+export_results:
+  enabled: True
+  export_dir: './test/results'
