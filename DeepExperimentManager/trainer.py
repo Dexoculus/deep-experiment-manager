@@ -1,7 +1,8 @@
 import time
+from tqdm import tqdm
+
 import torch
 from torch import nn, optim
-from tqdm import tqdm
 
 from .utils import save_checkpoint
 from .visualization import plot_losses
@@ -51,6 +52,8 @@ class Trainer:
             pbar.update(1)
 
             self.train_loader = train_loader
+            if self.train_loader is None:
+                raise ValueError("Training data loader (train_loader) is not provided.")
             pbar.set_postfix_str("Loading training data loader...")
             time.sleep(0.5)
             pbar.update(1)
@@ -104,9 +107,6 @@ class Trainer:
         return optimizer_class(self.model.parameters(), lr=lr, **optimizer_args)
 
     def train(self):
-        if self.train_loader is None:
-            raise ValueError("Training data loader (train_loader) is not provided.")
-
         print("[Training] Starting training process...")
         epochs = self.config['training']['epochs']
         self.zf = len(str(epochs)) # Zero filling
@@ -135,7 +135,7 @@ class Trainer:
             if self.visualization_enabled or self.export_results_enabled:
                 self.train_losses.append(avg_loss)
 
-            if self.valid_loader is not None:
+            if self.valid_loader is not None: # Validation
                 val_start_time = time.time()
                 val_loss = self.validate(epoch, epochs)
                 val_end_time = time.time()

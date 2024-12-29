@@ -65,3 +65,37 @@ records:
     valid_losses: []
     test_results:
         accuracy: 0.9891
+-   model_config:
+        module: tests.model
+        class: TestModel
+        args:
+            output_size: 10
+    training_config:
+        epochs: 10
+        learning_rate: 0.001
+        optimizer:
+            type: Adam
+            args:
+                weight_decay: 0.0001
+        batch_size: 64
+    loss_func:
+        type: CrossEntropyLoss
+        args: {}
+    num_parameters: 21840
+    total_time: 85.28035092353821
+    valid_time: 0
+    train_losses:
+    - 0.5216615321174232
+    - 0.24527650614823104
+    - 0.20226057257249094
+    - 0.1795568378654116
+    - 0.1657420973787938
+    - 0.15402356047294477
+    - 0.1471822667441992
+    - 0.14346077741443444
+    - 0.13830537962189107
+    - 0.1339023707092984
+    valid_losses: []
+    test_results:
+        sklearn.metrics.accuracy_score: 0.9885
+        sklearn.metrics.r2_score: 0.9745742390741177

@@ -1,5 +1,5 @@
 model:
-  module: 'test.model'
+  module: 'tests.model'
   class: 'TestModel'
   args: # Input Arguments of your model
     output_size: 10
@@ -15,7 +15,11 @@ training:
       weight_decay: 0.0001
 
 testing:
-  metric: ['accuracy'] # "f1", "mse", "mae"
+  metrics: # Get metric functions from sklearn
+    - "sklearn.metrics.accuracy_score" 
+    - "sklearn.metrics.r2_score"
+    - "sklearn.metrics.f1_score"
+    # - "custom_metrics.yourmetrics" or you can import your own custom metrics
 
 loss:
   type: 'CrossEntropyLoss'
