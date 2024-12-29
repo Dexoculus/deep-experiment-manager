@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='DeepExperimentManager',
-    version='0.1.2',
+    version='0.1.3',
     author='Dexoculus',
     author_email='hyeonbin@hanyang.ac.kr',
     description='A module for training, testing, and managing experiments in PyTorch.',
