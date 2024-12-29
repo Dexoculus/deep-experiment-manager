@@ -4,6 +4,8 @@ model:
   args: # Input Arguments of your model
     output_size: 10
 
+task: "classification" # regression, multi_label
+
 training:
   epochs: 10
   learning_rate: 0.001
@@ -25,12 +27,12 @@ dataset:
   preprocessing_arg: 'transform'
   args:
     preprocessing:
-      module: 'test.preprocessing'
+      module: 'tests.preprocessing'
       function: 'get_transform'
 
     train:
       args: # Input Arguments of your custom dataset
-        root: './test/data'
+        root: './tests/data'
         train: True
         download: True
       loader: # Arguments of DataLoader
@@ -41,7 +43,7 @@ dataset:
     #  loader: {}
     test:
       args: # Input Arguments of your custom dataset
-        root: './test/data'
+        root: './tests/data'
         train: False
         download: True
       loader: # Arguments of DataLoader
@@ -50,8 +52,9 @@ dataset:
 
 visualization:
   enabled: True
-  plot_dir: './test/plots'
+  plot_dir: './tests/plots'
+  log_scale: True
 
 export_results:
   enabled: True
-  export_dir: './test/results'
+  export_dir: './tests/results'

@@ -151,7 +151,8 @@ class Trainer:
 
         if self.visualization_enabled:
             plot_dir = self.config['visualization'].get('plot_dir', f'./plots/{type(self.model).__name__}')
-            plot_losses(self.train_losses, self.valid_losses, plot_dir, type(self.model).__name__)
+            islogscale = self.config['visualization'].get('log_scale', False)
+            plot_losses(self.train_losses, self.valid_losses, plot_dir, type(self.model).__name__, islogscale)
 
     def validate(self, epoch, epochs):
         print(f"[Validation] Starting validation for epoch {epoch+1:0{self.zf}d}/{epochs}...")

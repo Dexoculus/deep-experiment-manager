@@ -1,8 +1,8 @@
 from tqdm import tqdm
 import torch
-from sklearn.metrics import accuracy_score, mean_squared_error, mean_absolute_error, f1_score
+from sklearn.metrics import *
 
-from .visualization import plot_performance
+from .visualization import plot_regression
 
 class Tester:
     """
@@ -85,11 +85,6 @@ class Tester:
             print(f"[Testing] Test Mean Absolute Error: {self.results['mae']:.4f}")
 
         print("[Testing] Test process completed.")
-        """ In developing...
-        if self.visualization_enabled:
-            plot_dir = self.config['visualization'].get('plot_dir', './plots')
-            plot_performance(self.train_losses, self.valid_losses, plot_dir)
-        """
 
     def get_results(self):
         """
