@@ -134,3 +134,38 @@ records:
     test_results:
         sklearn.metrics.accuracy_score: 0.9897
         sklearn.metrics.r2_score: 0.9739302470056385
+-   model_config:
+        module: tests.model
+        class: TestModel
+        args:
+            output_size: 10
+    training_config:
+        epochs: 10
+        learning_rate: 0.001
+        optimizer:
+            type: Adam
+            args:
+                weight_decay: 0.0001
+        batch_size: 64
+    loss_func:
+        module: torch.nn
+        type: CrossEntropyLoss
+        args: {}
+    num_parameters: 21840
+    total_time: 87.87153029441833
+    valid_time: 0
+    train_losses:
+    - 0.5216744897414499
+    - 0.24496070900435513
+    - 0.2015617980556225
+    - 0.17965451140266492
+    - 0.16630395013155905
+    - 0.15376898549052317
+    - 0.14946513038887177
+    - 0.1430699843476449
+    - 0.1383125391492902
+    - 0.13539661642021017
+    valid_losses: []
+    test_results:
+        sklearn.metrics.accuracy_score: 0.9892
+        sklearn.metrics.r2_score: 0.9722844894973027

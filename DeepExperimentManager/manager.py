@@ -27,7 +27,7 @@ class ExperimentManager:
             config_path (str): The path to the configuration file.
         """
         self.config = load_config(config_path)
-        self.device = self._get_device()
+        self.devices = self._get_device()
         self.export_results_enabled = self.config.get('export_results', {}).get('enabled', False)
         self.trainer = Trainer
         self.tester = Tester
@@ -35,11 +35,53 @@ class ExperimentManager:
     def _get_device(self):
         """
         Determines the computation device (CPU or GPU).
+        e.g.,
+            input dev_str: "cuda", "cuda:0", "mps", etc.
+            output: torch.device("cpu"), torch.device("cuda:0"), torch.device("mps"), etc.
+
+            input dev_str: "cuda:0, cuda:1, cuda:2"
+            output: [torch.device("cuda:0"), torch.device("cuda:1"), torch.device("cuda:2")]
 
         Returns:
             torch.device: The device to use.
         """
-        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device_config = self.config.get('device', 'cpu') # default device: CPU
+
+        if isinstance(device_config, str):
+            return [self._parse_single_device(device_config)]
+
+        elif isinstance(device_config, list):
+            devices = []
+            for dev_str in device_config:
+                devices.append(self._parse_single_device(dev_str))
+
+            return devices
+        
+        else:
+            raise ValueError(
+                f"Unsupported device config type: {type(device_config)}. "
+                "Must be either a string or a list of strings."
+            )
+        
+    def _parse_single_device(self, dev_str):
+        """
+        Parses a single device string and returns torch.device.
+        e.g.,
+            input dev_str: "cuda:0"
+            output: torch.device("cuda:0")
+
+        Args:
+            dev_str (str): String config that contains information of device.
+        """
+        device_list = ['cpu', 'cuda', 'mps', 'xla', 'hip', 'dml']
+
+        if dev_str.split(':')[0] in device_list:
+            return torch.device(dev_str)
+        
+        raise ValueError(
+            f"Unsupported device config: {dev_str}. "
+            f"Valid device backends are {device_list} (+ optional :index for GPU)."
+        )
 
     def run_experiment(self):
         """
@@ -47,20 +89,29 @@ class ExperimentManager:
         """
         set_seed(self.config.get('seed', 42))
 
+        self.model = self._load_model()
+
         # Load model and move to appropriate device
-        self.model = self._load_model().to(self.device)
+        if len(self.devices) > 1:
+            device_ids = [
+                d.index for d in self.devices if d.type == 'cuda'
+            ]
+            self.model = torch.nn.DataParallel(self.model, device_ids=device_ids)
+            self.model.to(self.devices[0])
+        else:
+            self.model.to(self.devices[0])
 
         # Retrieve train, valid, and test loaders based on config
         train_loader, valid_loader, test_loader = get_datasets(self.config['dataset'])
 
         # Initialize trainer and run training
-        self.trainer = self.trainer(self.model, train_loader, valid_loader, self.config, self.device)
+        self.trainer = self.trainer(self.model, train_loader, valid_loader, self.config, self.devices[0])
         self.trainer.train()
 
         # If a test loader is available, run testing
         if test_loader is not None:
             self.isTest = True
-            self.tester = self.tester(self.model, test_loader, self.config, self.device)
+            self.tester = self.tester(self.model, test_loader, self.config, self.devices[0])
             self.tester.test()
         else:
             self.isTest = False
