@@ -150,10 +150,13 @@ You can also check the example codes in `/test` directory.
 Example:
 ```yaml
 model:
-  module: 'test.model'
+  module: 'tests.model'
   class: 'TestModel'
   args: # Input Arguments of your model
     output_size: 10
+
+device: 'cuda' # If None, default is CPU
+task: "classification" # regression, multi_label, etc.
 
 training:
   epochs: 10
@@ -164,24 +167,28 @@ training:
       weight_decay: 0.0001
 
 testing:
-  metric: ['accuracy', 'mse'] # "f1", "mae"
+  metrics: # Get metric functions from sklearn
+    - "sklearn.metrics.accuracy_score" 
+    - "sklearn.metrics.r2_score"
+    # - "custom_metrics.yourmetrics" or you can import your own custom metrics
 
 loss:
+  module: 'torch.nn'
   type: 'CrossEntropyLoss'
   args: {}
 
 dataset:
-  module: 'torchvision.datasets' # PyTorch built-in dataset
+  module: 'torchvision.datasets'
   class: 'MNIST'
   preprocessing_arg: 'transform'
   args:
     preprocessing:
-      module: 'test.preprocessing'
+      module: 'tests.preprocessing'
       function: 'get_transform'
 
     train:
       args: # Input Arguments of your custom dataset
-        root: './train/data'
+        root: './tests/data'
         train: True
         download: True
       loader: # Arguments of DataLoader
@@ -192,7 +199,7 @@ dataset:
     #  loader: {}
     test:
       args: # Input Arguments of your custom dataset
-        root: './test/data'
+        root: './tests/data'
         train: False
         download: True
       loader: # Arguments of DataLoader
@@ -201,11 +208,12 @@ dataset:
 
 visualization:
   enabled: True
-  plot_dir: './plots'
+  plot_dir: './tests/plots'
+  log_scale: True
 
 export_results:
   enabled: True
-  export_dir: './results'
+  export_dir: './tests/results'
 ```
 
 2. **Write the Model Experiment Code:**
