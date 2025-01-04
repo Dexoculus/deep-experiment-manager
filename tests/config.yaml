@@ -4,6 +4,7 @@ model:
   args: # Input Arguments of your model
     output_size: 10
 
+device: 'cuda'
 task: "classification" # regression, multi_label
 
 training:
@@ -18,10 +19,10 @@ testing:
   metrics: # Get metric functions from sklearn
     - "sklearn.metrics.accuracy_score" 
     - "sklearn.metrics.r2_score"
-    - "sklearn.metrics.f1_score"
     # - "custom_metrics.yourmetrics" or you can import your own custom metrics
 
 loss:
+  module: 'torch.nn'
   type: 'CrossEntropyLoss'
   args: {}
 

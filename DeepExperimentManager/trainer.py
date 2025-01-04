@@ -1,5 +1,6 @@
 import time
 from tqdm import tqdm
+import importlib
 
 import torch
 from torch import nn, optim
@@ -91,9 +92,11 @@ class Trainer:
 
     def _get_loss_function(self):
         loss_config = self.config.get('loss', {})
+        module_name = loss_config.get('module', 'torch.nn') # Default: torch.nn
+        loss_module = importlib.import_module(module_name)
         loss_type = loss_config['type']
         loss_args = loss_config.get('args', {})
-        loss_class = getattr(nn, loss_type)
+        loss_class = getattr(loss_module, loss_type)
 
         return loss_class(**loss_args)
 
